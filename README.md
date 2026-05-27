@@ -72,6 +72,4 @@ npx cap sync android
 npx cap open android
 ```
 
-## 📜 License
 
-This project is licensed under the MIT License.
