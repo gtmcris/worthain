@@ -1,0 +1,89 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account information and aggregate statistics.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "goal": {
+          "type": "object",
+          "properties": {
+            "dailyWords": { "type": "integer" }
+          }
+        },
+        "stats": {
+          "type": "object",
+          "properties": {
+            "totalWords": { "type": "integer" },
+            "masteredWords": { "type": "integer" },
+            "streak": { "type": "integer" },
+            "lastActivity": { "type": "string", "format": "date-time" }
+          }
+        }
+      },
+      "required": ["userId", "email"]
+    },
+    "Vocabulary": {
+      "title": "Vocabulary Entry",
+      "description": "An individual word or phrase stored by a user.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "term": { "type": "string" },
+        "translation": { "type": "string" },
+        "meaning": { "type": "string" },
+        "exampleSentences": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "level": { "type": "string", "enum": ["A1", "A2", "B1", "B2", "C1", "C2"] },
+        "frequency": { "type": "number" },
+        "relatedWords": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "labels": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "mastery": { "type": "integer" },
+        "status": { "type": "string", "enum": ["learning", "mastered", "favorite"] },
+        "nextReview": { "type": "string", "format": "date-time" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" },
+        "notes": { "type": "string" }
+      },
+      "required": ["userId", "term", "translation"]
+    },
+    "PracticeLog": {
+      "title": "Practice Session Log",
+      "description": "Log entry for a practice session on a specific word.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "vocabId": { "type": "string" },
+        "result": { "type": "string", "enum": ["easy", "good", "hard", "again"] },
+        "timestamp": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "vocabId", "result", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profiles by UID"
+    },
+    "/vocabularies/{vocabId}": {
+      "schema": "Vocabulary",
+      "description": "Global collection of vocabulary entries, secured by userId"
+    },
+    "/practice_logs/{logId}": {
+      "schema": "PracticeLog",
+      "description": "Historical practice sessions"
+    }
+  }
+}

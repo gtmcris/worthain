@@ -1,0 +1,6 @@
+{
+  "name": "WortHain",
+  "description": "A polished German-English vocabulary finder and learning app with AI-powered context, flashcards, and cross-device sync.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["AI-powered vocabulary search", "Spaced Repetition System (SRS) Flashcards", "Firestore Sync"]
+}

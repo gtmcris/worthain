@@ -1,0 +1,102 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // 0. Global Safety Net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 1. Primitive Helpers
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    function isEmailVerified() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+    function incoming() {
+      return request.resource.data;
+    }
+    function existing() {
+      return resource.data;
+    }
+
+    // 2. Entity Validators
+    function isValidUser(data) {
+      return data.keys().hasAll(['userId', 'email']) &&
+             data.userId is string && data.userId.size() <= 128 &&
+             data.email is string && data.email.size() <= 256 &&
+             (!('displayName' in data) || (data.displayName is string && data.displayName.size() <= 100)) &&
+             (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 1000)) &&
+             (!('goal' in data) || (data.goal is map && (!('dailyWords' in data.goal) || data.goal.dailyWords is int))) &&
+             (!('stats' in data) || (data.stats is map &&
+               (!('totalWords' in data.stats) || data.stats.totalWords is int) &&
+               (!('masteredWords' in data.stats) || data.stats.masteredWords is int) &&
+               (!('streak' in data.stats) || data.stats.streak is int)
+             ));
+    }
+
+    function isValidVocabulary(data) {
+      return data.keys().hasAll(['userId', 'term', 'translation']) &&
+             data.userId == request.auth.uid &&
+             data.term is string && data.term.size() <= 500 &&
+             data.translation is string && data.translation.size() <= 500 &&
+             (!('meaning' in data) || (data.meaning is string && data.meaning.size() <= 2000)) &&
+             (!('level' in data) || (data.level in ['A1', 'A2', 'B1', 'B2', 'C1', 'C2'])) &&
+             (!('status' in data) || (data.status in ['learning', 'mastered', 'favorite'])) &&
+             (!('frequency' in data) || (data.frequency is number)) &&
+             (!('frequencyContext' in data) || (data.frequencyContext is string)) &&
+             (!('mastery' in data) || (data.mastery is int && data.mastery >= 0 && data.mastery <= 100)) &&
+             (!('exampleSentences' in data) || (data.exampleSentences is list && data.exampleSentences.size() <= 10)) &&
+             (!('relatedWords' in data) || (data.relatedWords is list && data.relatedWords.size() <= 20)) &&
+             (!('similarWords' in data) || (data.similarWords is list && data.similarWords.size() <= 20)) &&
+             (!('wordFamily' in data) || (data.wordFamily is list && data.wordFamily.size() <= 20)) &&
+             (!('labels' in data) || (data.labels is list && data.labels.size() <= 20)) &&
+             (!('source' in data) || (data.source is string && data.source.size() <= 50)) &&
+             (!('grammar' in data) || (data.grammar is map)) &&
+             (!('examples' in data) || (data.examples is list)) &&
+             (!('createdAt' in data) || data.createdAt is timestamp) &&
+             (!('updatedAt' in data) || data.updatedAt is timestamp);
+    }
+
+    function isValidPracticeLog(data) {
+      return data.keys().hasAll(['userId', 'vocabId', 'result', 'timestamp']) &&
+             data.userId == request.auth.uid &&
+             data.vocabId is string && data.vocabId.size() <= 128 &&
+             data.result in ['easy', 'good', 'hard', 'again'] &&
+             data.timestamp == request.time;
+    }
+
+    // 3. Collection Rules
+    match /users/{userId} {
+      allow get: if isOwner(userId);
+      allow create: if isOwner(userId);
+      allow update: if isOwner(userId);
+      allow delete: if false; // Profiles generally shouldn't be deleted via client
+    }
+
+    match /vocabularies/{vocabId} {
+      allow get: if isSignedIn() && isOwner(existing().userId);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(vocabId) && isValidVocabulary(incoming());
+      allow update: if isSignedIn() && isOwner(existing().userId) && 
+                    isValidVocabulary(incoming()) &&
+                    incoming().userId == existing().userId &&
+                    incoming().term == existing().term; // Term is immutable for now
+      allow delete: if isSignedIn() && isOwner(existing().userId);
+    }
+
+    match /practice_logs/{logId} {
+      allow get: if isSignedIn() && isOwner(existing().userId);
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isSignedIn() && isValidId(logId) && isValidPracticeLog(incoming()) &&
+                    exists(/databases/$(database)/documents/vocabularies/$(incoming().vocabId));
+      allow update, delete: if false; // Logs are append-only
+    }
+  }
+}

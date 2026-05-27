@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "84272919635",
+    "project_id": "gen-lang-client-0212168617",
+    "storage_bucket": "gen-lang-client-0212168617.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:84272919635:android:2df007c6869ac1b2a682a6",
+        "android_client_info": {
+          "package_name": "com.wortabulary.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "84272919635-v12gcmpin9o27a6tl56lni6sg7up83r1.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyB6SCF6-lZ-6V4QU7cB6rxzkx7WFoLaxzA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "84272919635-v12gcmpin9o27a6tl56lni6sg7up83r1.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
